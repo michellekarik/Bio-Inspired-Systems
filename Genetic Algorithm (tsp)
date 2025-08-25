@@ -18,11 +18,11 @@ def create_route(): return random.sample(range(N), N)
 
 # Calculate total distance of route
 def route_distance(route):
-    dist = sum(math.hypot(cities[city_names[route[i]][0]] - cities[city_names[route[i-1]]][0],
-                          cities[city_names[route[i]][1]] - cities[city_names[route[i-1]]][1])
-               for i in range(N))
-    dist += math.hypot(cities[city_names[route[0]][0]] - cities[city_names[route[-1]]][0],
-                       cities[city_names[route[0]][1]] - cities[city_names[route[-1]]][1])
+    dist = 0
+    for i in range(N):
+        x1, y1 = cities[city_names[route[i - 1]]]
+        x2, y2 = cities[city_names[route[i]]]
+        dist += math.hypot(x2 - x1, y2 - y1)
     return dist
 
 # Selection (Tournament)
