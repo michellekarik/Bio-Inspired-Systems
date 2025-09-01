@@ -1,0 +1,62 @@
+import random
+
+# STEP 1: Define the cost function (we want to minimize this)
+def cost_function(x, y):
+    return (x - 3)**2 + (y - 2)**2  # Minimum cost at (3, 2)
+
+# STEP 2: Define a Particle (drone)
+class Particle:
+    def __init__(self):
+        # Random starting position (x, y)
+        self.position = [random.uniform(-10, 10), random.uniform(-10, 10)]
+        # Random starting velocity
+        self.velocity = [random.uniform(-1, 1), random.uniform(-1, 1)]
+        # Best position seen so far (initially same as starting)
+        self.best_position = list(self.position)
+        # Cost at the best position
+        self.best_cost = cost_function(self.position[0], self.position[1])
+
+    def update_velocity(self, global_best_position, c1, c2):
+        for i in range(2):  # for x and y
+            r1 = random.random()
+            r2 = random.random()
+
+            # Personal and social components
+            personal_pull = c1 * r1 * (self.best_position[i] - self.position[i])
+            social_pull = c2 * r2 * (global_best_position[i] - self.position[i])
+
+            # Update velocity
+            self.velocity[i] = self.velocity[i] + personal_pull + social_pull
+
+    def update_position(self):
+        for i in range(2):
+            self.position[i] += self.velocity[i]
+
+        # Check if new position is better
+        current_cost = cost_function(self.position[0], self.position[1])
+        if current_cost < self.best_cost:
+            self.best_position = list(self.position)
+            self.best_cost = current_cost
+
+# STEP 3: Run the PSO algorithm
+def run_pso(num_particles=10, max_iterations=10, c1=1.5, c2=1.5):  # Limited to 10 iterations
+    swarm = [Particle() for _ in range(num_particles)]
+    global_best = min(swarm, key=lambda p: p.best_cost)
+    global_best_position = list(global_best.best_position)
+
+    for step in range(max_iterations):  # Only 10 steps
+        for particle in swarm:
+            particle.update_velocity(global_best_position, c1, c2)
+            particle.update_position()
+
+        # Check for new global best
+        current_best = min(swarm, key=lambda p: cost_function(p.position[0], p.position[1]))
+        if cost_function(current_best.position[0], current_best.position[1]) < cost_function(global_best_position[0], global_best_position[1]):
+            global_best_position = list(current_best.position)
+
+        print(f"Step {step+1}: Best position so far = {global_best_position}, Cost = {cost_function(global_best_position[0], global_best_position[1]):.4f}")
+
+    print("\n✅ Best delivery location found:", global_best_position)
+
+# STEP 4: Start the PSO
+run_pso()
