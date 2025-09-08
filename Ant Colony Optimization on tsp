@@ -1,0 +1,96 @@
+import random
+import math
+
+# 1. Problem setup: define distance matrix (symmetric TSP)
+# Cities: A, B, C, D
+distances = [
+    [0, 2, 9, 10],
+    [1, 0, 6, 4],
+    [15, 7, 0, 8],
+    [6, 3, 12, 0]
+]
+
+num_cities = len(distances)
+num_ants = 4
+num_iterations = 100
+
+# 2. ACO parameters
+alpha = 1      # influence of pheromone
+beta = 5       # influence of distance
+rho = 0.5      # evaporation rate
+Q = 100        # pheromone deposit factor
+
+# 3. Initialize pheromone levels on all edges (small constant)
+pheromones = [[1 for _ in range(num_cities)] for _ in range(num_cities)]
+
+# Helper: Calculate the probability of moving to a city
+def probability(from_city, to_city, visited):
+    if to_city in visited:
+        return 0
+    pheromone = pheromones[from_city][to_city] ** alpha
+    visibility = (1 / distances[from_city][to_city]) ** beta
+    return pheromone * visibility
+
+# Helper: Construct a tour for an ant
+def construct_tour(start_city):
+    tour = [start_city]
+    while len(tour) < num_cities:
+        current = tour[-1]
+        probs = [probability(current, j, tour) for j in range(num_cities)]
+        total = sum(probs)
+        if total == 0:
+            # No valid move, pick randomly from unvisited cities
+            unvisited = [j for j in range(num_cities) if j not in tour]
+            next_city = random.choice(unvisited)
+        else:
+            # Roulette wheel selection
+            probs = [p / total for p in probs]
+            r = random.random()
+            cumulative = 0
+            for i, p in enumerate(probs):
+                cumulative += p
+                if r <= cumulative:
+                    next_city = i
+                    break
+        tour.append(next_city)
+    return tour
+
+# Helper: Calculate total length of a tour
+def tour_length(tour):
+    length = 0
+    for i in range(num_cities):
+        length += distances[tour[i]][tour[(i + 1) % num_cities]]
+    return length
+
+# 4. Main ACO loop
+best_tour = None
+best_length = float('inf')
+
+for iteration in range(num_iterations):
+    all_tours = []
+    for ant in range(num_ants):
+        start_city = random.randint(0, num_cities - 1)
+        tour = construct_tour(start_city)
+        length = tour_length(tour)
+        all_tours.append((tour, length))
+        if length < best_length:
+            best_length = length
+            best_tour = tour
+
+    # 5. Evaporate pheromones
+    for i in range(num_cities):
+        for j in range(num_cities):
+            pheromones[i][j] *= (1 - rho)
+
+    # 6. Deposit new pheromones (only best ant for simplicity)
+    for tour, length in all_tours:
+        deposit = Q / length
+        for i in range(num_cities):
+            from_city = tour[i]
+            to_city = tour[(i + 1) % num_cities]
+            pheromones[from_city][to_city] += deposit
+            pheromones[to_city][from_city] += deposit  # symmetrical TSP
+
+# 7. Output the best tour found
+print("Best tour:", best_tour)
+print("Tour length:", best_length)
