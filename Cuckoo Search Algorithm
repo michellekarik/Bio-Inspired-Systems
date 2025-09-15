@@ -1,0 +1,63 @@
+import numpy as np
+import random
+
+# Calculate the total distance for a given route (TSP solution)
+def calculate_distance(route, distance_matrix):
+    total_distance = 0
+    for i in range(len(route) - 1):
+        total_distance += distance_matrix[route[i]][route[i + 1]]
+    total_distance += distance_matrix[route[-1]][route[0]]  # Return to the start
+    return total_distance
+
+# Generate a new solution randomly
+def generate_new_solution(current_solution, distance_matrix, Pa):
+    new_solution = current_solution.copy()
+    # Use Levy flight to generate a new solution
+    idx1, idx2 = random.sample(range(len(current_solution)), 2)
+    new_solution[idx1], new_solution[idx2] = new_solution[idx2], new_solution[idx1]
+    return new_solution
+
+# Main Cuckoo Search Algorithm for TSP
+def cuckoo_search(distance_matrix, n, max_iter, Pa):
+    # Initialize population (random solutions)
+    population = [random.sample(range(len(distance_matrix)), len(distance_matrix)) for _ in range(n)]
+    fitness = [calculate_distance(sol, distance_matrix) for sol in population]
+
+    best_solution = population[np.argmin(fitness)]
+    best_fitness = min(fitness)
+
+    t = 0
+    while t < max_iter:
+        for i in range(n):
+            new_solution = generate_new_solution(population[i], distance_matrix, Pa)
+            new_fitness = calculate_distance(new_solution, distance_matrix)
+
+            if new_fitness < fitness[i]:
+                population[i] = new_solution
+                fitness[i] = new_fitness
+
+        # Rank and find the best solution
+        best_solution = population[np.argmin(fitness)]
+        best_fitness = min(fitness)
+
+        t += 1
+
+    return best_solution, best_fitness
+
+# Example distance matrix for TSP
+distance_matrix = np.array([
+    [0, 10, 15, 20],
+    [10, 0, 35, 25],
+    [15, 35, 0, 30],
+    [20, 25, 30, 0]
+])
+
+# Parameters
+n = 10  # Population size
+max_iter = 100  # Maximum iterations
+Pa = 0.25  # Fraction of worst nests to abandon
+
+best_solution, best_fitness = cuckoo_search(distance_matrix, n, max_iter, Pa)
+
+print("Best Solution:", best_solution)
+print("Best Fitness:", best_fitness)
