@@ -1,0 +1,42 @@
+import numpy as np
+
+# Objective / fitness function
+def fitness(x):
+    return x**2 - 4*x + 4
+
+# Parameters
+grid_size = 10
+iterations = 10
+
+# Initialize population: random values between 0 and 5
+cells = np.random.uniform(0, 5, (grid_size, grid_size))
+
+# Neighborhood indices helper (3x3 neighborhood)
+def get_neighbors(i, j, size):
+    neighbors = []
+    for x in range(max(0, i-1), min(size, i+2)):
+        for y in range(max(0, j-1), min(size, j+2)):
+            if (x, y) != (i, j):
+                neighbors.append((x, y))
+    return neighbors
+
+for _ in range(iterations):
+    new_cells = cells.copy()
+    for i in range(grid_size):
+        for j in range(grid_size):
+            neighbors = get_neighbors(i, j, grid_size)
+            # Evaluate fitness of neighbors and self
+            fitnesses = [fitness(cells[x, y]) for x, y in neighbors] + [fitness(cells[i, j])]
+            states = [cells[x, y] for x, y in neighbors] + [cells[i, j]]
+            # Find the neighbor with minimum fitness (best solution)
+            best_state = states[np.argmin(fitnesses)]
+            # Update cell to best neighbor's state
+            new_cells[i, j] = best_state
+    cells = new_cells
+
+# Find best solution
+flat_cells = cells.flatten()
+best_x = flat_cells[np.argmin([fitness(x) for x in flat_cells])]
+best_fitness = fitness(best_x)
+
+print(f"Best solution x = {best_x:.4f} with fitness = {best_fitness:.4f}")
