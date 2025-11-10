@@ -1,0 +1,47 @@
+import random
+
+# --- Problem setup ---
+DEMAND = 100   # total energy demand (kWh)
+SOURCES = 3    # number of energy sources
+POP_SIZE = 10  # number of solutions
+GENS = 20      # number of generations
+
+# Cost per kWh and loss rate for each source
+cost = [0.04, 0.03, 0.06]   # solar, wind, grid
+loss = [0.05, 0.02, 0.03]
+
+# --- Helper functions ---
+def fitness(solution):
+    total_supply = sum(solution)
+    balance_penalty = abs(total_supply - DEMAND) * 2  # penalize mismatch
+    total_cost = sum(solution[i] * (cost[i] + loss[i]) for i in range(SOURCES))
+    return total_cost + balance_penalty
+
+def mutate(sol):
+    i = random.randrange(SOURCES)
+    sol[i] += random.uniform(-5, 5)
+    sol[i] = max(0, sol[i])
+    return sol
+
+def crossover(p1, p2):
+    cut = random.randint(1, SOURCES - 1)
+    child = p1[:cut] + p2[cut:]
+    return child
+
+# --- Genetic Algorithm ---
+population = [[random.uniform(0, DEMAND / SOURCES) for _ in range(SOURCES)] for _ in range(POP_SIZE)]
+
+for gen in range(GENS):
+    population.sort(key=fitness)
+    best = population[0]
+    print(f"Gen {gen+1}: Best cost = {fitness(best):.3f}, Solution = {best}")
+    new_pop = population[:2]  # keep best two
+    while len(new_pop) < POP_SIZE:
+        p1, p2 = random.sample(population[:5], 2)
+        child = mutate(crossover(p1, p2))
+        new_pop.append(child)
+    population = new_pop
+
+print("\nFinal optimized energy distribution:")
+print(f"Solar: {best[0]:.2f} kWh, Wind: {best[1]:.2f} kWh, Grid: {best[2]:.2f} kWh")
+print(f"Total supply: {sum(best):.2f} kWh, Total cost: {fitness(best):.3f}")
