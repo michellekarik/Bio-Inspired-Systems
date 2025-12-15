@@ -1,0 +1,125 @@
+# Google Colab friendly Cuckoo Search Algorithm
+
+import numpy as np
+import matplotlib.pyplot as plt
+import math
+
+# For reproducibility
+np.random.seed(42)
+
+# Objective function (Sphere function)
+def objective(x):
+    return np.sum(x ** 2)
+
+# Lévy flight function
+def levy_flight(beta, dim):
+    sigma = (
+        math.gamma(1 + beta) * math.sin(math.pi * beta / 2) /
+        (math.gamma((1 + beta) / 2) * beta * 2 ** ((beta - 1) / 2))
+    ) ** (1 / beta)
+
+    u = np.random.normal(0, sigma, dim)
+    v = np.random.normal(0, 1, dim)
+    step = u / (np.abs(v) ** (1 / beta))
+    return step
+
+# Cuckoo Search Algorithm
+def cuckoo_search(n=20, dim=2, iters=50, pa=0.25, alpha=0.01):
+    nests = np.random.uniform(-10, 10, (n, dim))
+    fitness = np.array([objective(nest) for nest in nests])
+
+    best_history = []
+
+    for t in range(iters):
+        for i in range(n):
+            step = levy_flight(beta=1.5, dim=dim)
+            new_nest = nests[i] + alpha * step
+            new_fitness = objective(new_nest)
+
+            if new_fitness < fitness[i]:
+                nests[i] = new_nest
+                fitness[i] = new_fitness
+
+        # Abandon a fraction of nests
+        abandon = np.random.rand(n) < pa
+        nests[abandon] = np.random.uniform(-10, 10, (np.sum(abandon), dim))
+        fitness[abandon] = [objective(nest) for nest in nests[abandon]]
+
+        best_idx = np.argmin(fitness)
+        best_history.append(fitness[best_idx])
+
+        print(f"Iteration {t+1:02d} | Best Fitness = {fitness[best_idx]:.6f}")
+
+    return nests[best_idx], fitness[best_idx], best_history
+
+# Run algorithm
+best_solution, best_value, history = cuckoo_search()
+
+print("\nBest Solution:", best_solution)
+print("Best Objective Value:", best_value)
+
+# Plot convergence curve
+plt.figure(figsize=(8, 5))
+plt.plot(history, marker='o')
+plt.xlabel("Iteration")
+plt.ylabel("Best Fitness")
+plt.title("Cuckoo Search Convergence Curve")
+plt.grid(True)
+plt.show()
+
+
+
+OUTPUT:
+Iteration 01 | Best Fitness = 15.009413
+Iteration 02 | Best Fitness = 8.215276
+Iteration 03 | Best Fitness = 8.092818
+Iteration 04 | Best Fitness = 8.058144
+Iteration 05 | Best Fitness = 3.431975
+Iteration 06 | Best Fitness = 3.431975
+Iteration 07 | Best Fitness = 1.993264
+Iteration 08 | Best Fitness = 3.364303
+Iteration 09 | Best Fitness = 3.292922
+Iteration 10 | Best Fitness = 3.292922
+Iteration 11 | Best Fitness = 3.292922
+Iteration 12 | Best Fitness = 3.292922
+Iteration 13 | Best Fitness = 10.615589
+Iteration 14 | Best Fitness = 10.615589
+Iteration 15 | Best Fitness = 10.484894
+Iteration 16 | Best Fitness = 20.732556
+Iteration 17 | Best Fitness = 17.122935
+Iteration 18 | Best Fitness = 17.013038
+Iteration 19 | Best Fitness = 16.273448
+Iteration 20 | Best Fitness = 16.234709
+Iteration 21 | Best Fitness = 16.861839
+Iteration 22 | Best Fitness = 16.861839
+Iteration 23 | Best Fitness = 16.861839
+Iteration 24 | Best Fitness = 1.143319
+Iteration 25 | Best Fitness = 29.280216
+Iteration 26 | Best Fitness = 11.336273
+Iteration 27 | Best Fitness = 11.336273
+Iteration 28 | Best Fitness = 11.336273
+Iteration 29 | Best Fitness = 3.642383
+Iteration 30 | Best Fitness = 7.272583
+Iteration 31 | Best Fitness = 7.272583
+Iteration 32 | Best Fitness = 7.306482
+Iteration 33 | Best Fitness = 3.925838
+Iteration 34 | Best Fitness = 3.897785
+Iteration 35 | Best Fitness = 3.897785
+Iteration 36 | Best Fitness = 3.897785
+Iteration 37 | Best Fitness = 13.982421
+Iteration 38 | Best Fitness = 13.902668
+Iteration 39 | Best Fitness = 3.931461
+Iteration 40 | Best Fitness = 3.931461
+Iteration 41 | Best Fitness = 3.931461
+Iteration 42 | Best Fitness = 3.905919
+Iteration 43 | Best Fitness = 4.657021
+Iteration 44 | Best Fitness = 12.972295
+Iteration 45 | Best Fitness = 12.972295
+Iteration 46 | Best Fitness = 12.027791
+Iteration 47 | Best Fitness = 11.916331
+Iteration 48 | Best Fitness = 3.492434
+Iteration 49 | Best Fitness = 3.492434
+Iteration 50 | Best Fitness = 3.484756
+
+Best Solution: [-0.89499267  1.6382138 ]
+Best Objective Value: 3.484756342144579
